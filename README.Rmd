@@ -31,7 +31,7 @@ The code in the function is commented, but what follow is a brief description of
     + 'date' is the date for which we want information,  
     + 'scenario' matches the population scenario ('upper', 'lower' or 'median')  
     + 'path_save' is the local path where the maps are saved    
-    + raster_biomes' is a  raster containing biome information. It matches the biomes shapefile found             [here](https://www.worldwildlife.org/publications/terrestrial-ecoregions-of-the-world). The biomes raster can be downloaded [here] (https://github.com/....)
+    + raster_biomes' is a  raster containing biome information. It matches the biomes shapefile found             [here](https://www.worldwildlife.org/publications/terrestrial-ecoregions-of-the-world). The biomes raster can be downloaded [here](https://github.com/vpellissier/holocene_biomes_dynamic/raw/master/Original%20data/biomes.tif)
     
   
 * The function proceed as follow:  
@@ -40,19 +40,33 @@ The code in the function is commented, but what follow is a brief description of
     + For each given biome in the raster, the percentage of each cell belonging to this biome and NOT being human land-cover is computed.
     + The output is saved as a stacked raster (one layer per biome) and the temporary folder is removed from the local computer
     
+#### Example
+First, one need to download the biome raster in a folder (here, I use a temporary folder) and the accompanying XML file.
+
+```{r eval = FALSE}
+library(raster)
+tp <- tempdir()
+raster_url <- "https://github.com/vpellissier/holocene_biomes_dynamic/raw/master/Original%20data/biomes.tif"
+xml_url <- "https://github.com/vpellissier/holocene_biomes_dynamic/raw/master/Original%20data/biomes.tif.aux.xml"
+download.file(raster_url, file.path(tp, "biomes.tif"), mode = "wb")
+download.file(xml_url, file.path(tp, "biomes.tif.aux.xml"), mode = "wb")
+raster_biome <- raster(file.path(tp, "biomes.tif"))
+```
     
+Then, maps are downloaded and computed for the 66 dates available in the HYDE dataset (unfortunately, dates had to be copied manually).
+```{r eval = FALSE}
+dates <- c("10000BC", "9000BC", "8000BC", "7000BC", "6000BC", "5000BC", "4000BC", "3000BC",
+           "2000BC", "1000BC", "0AD", "500AD", "1000AD", "1100AD", "1200AD", "1300AD", "1400AD", 
+           "1500AD", "1600AD", "1700AD", "1710AD", "1720AD", "1730AD",   "1740AD", "1750AD", 
+           "1760AD", "1770AD", "1780AD", "1790AD", "1800AD", "1810AD", "1820AD", "1840AD", 
+           "1850AD", "1860AD", "1870AD", "1880AD", "1890AD", "1900AD", "1910AD", "1920AD", 
+           "1930AD", "1940AD", "1950AD", "1960AD", "1970AD", "1980AD", "1990AD", "2000AD", 
+           "2001AD", "2002AD", "2003AD", "2004AD", "2005AD", "2006AD", "2007AD", "2008AD", 
+           "2009AD", "2010AD", "2011AD", "2012AD", "2013AD", "2014AD", "2015AD", "2016AD")
 
-
-```{r cars}
-summary(cars)
+for(time_point in dates){
+        try(compute_non_human(date, "upper", 
+                      raster_biome, 
+                      save_path = "your_path_here"))
+}
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
