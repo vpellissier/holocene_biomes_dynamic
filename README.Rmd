@@ -1,0 +1,58 @@
+---
+title: "Holocene biomes dynamic"
+author: "Vincent Pellissier"
+date: "29 août 2018"
+output: html_document
+---
+
+# Spatial dynamic of the biomes through the Holocene
+
+While organizing a workshop on the impact of human activities on biodiversity at different spatial
+scales, I realized that a good entry point would be to illustrate how some physical features of
+the environment (for example biome area, as defined as the area of a biome not being covered by land-use) 
+have changed through time.
+
+## The historical land-use dataset
+The HYDE 3.2 dataset is a well-known reconstruction of past land-use (from the beginning of the Holocene to present day). For each time point the percentage of each cell being cropland (divided into irrigated and rain-fed non-rice crops and irrigated and rain-fed rice crops) or grazing land (divided into intensive pasture and less intensive rangeland) is modelled based on population estimates. The whole data set comprises 67 series of maps: for each time point, a map for each of the above land-cover was produced. In addition, at each time point, three different population estimate are used (lower, median and upper)
+
+## Outputs
+I had two visual outputs in mind. (1) A temporal graph of the total area for each simplified biomes (Boreal forests, Temperate forests, Tropical forests, Temperate grasslands, Tropical grasslands, Desert and Other biomes) and (2) a series of chronological maps showing the variation of the extant of each biome through time
+
+## Methods
+### Downloading and extracting maps
+On the HYDE website, maps are downloadable either one by one (that is, for each point in time, one has to select the desired population scenario, format, date and type of land-cover) or in bulk (that is, on .zip file per date).
+Neither of these options is really practical. The first one implies clicking on each map, one by one. The second one implies extracting the maps from the zipfile, either one by one, or autocmatically (and having more information that is really needed).
+To overcome that issue, I designed a function (compute_non_human()) that computes for a given point in time and for each biome, the percentage of each cell NOT covered by a human land-cover (i.e. cropland and grazing land) and saves it on a local computer.  
+
+#### Download and computation algorithm
+The code in the function is commented, but what follow is a brief description of the algorithm and the code used to run the function:
+
+* The function takes several arguments:
+    + 'date' is the date for which we want information,  
+    + 'scenario' matches the population scenario ('upper', 'lower' or 'median')  
+    + 'path_save' is the local path where the maps are saved    
+    + raster_biomes' is a  raster containing biome information. It matches the biomes shapefile found             [here](https://www.worldwildlife.org/publications/terrestrial-ecoregions-of-the-world). The biomes raster can be downloaded [here] (https://github.com/....)
+    
+  
+* The function proceed as follow:  
+    + It calls a subfunction (dl_land_use()) which download a raster of a land-cover for a given date in a temporary folder This sub-function is called three time (to download raster for cropland, rangeland and pastures). This webscrapping approach requires one extra-step, explained in more detail below.
+    + The 3 rasters are loaded in the R environment and added together, in order to create a human land-cover layer.
+    + For each given biome in the raster, the percentage of each cell belonging to this biome and NOT being human land-cover is computed.
+    + The output is saved as a stacked raster (one layer per biome) and the temporary folder is removed from the local computer
+    
+    
+
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
