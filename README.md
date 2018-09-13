@@ -47,7 +47,8 @@ The code in the function is commented, but what follow is a brief description of
 #### Compiling raster of non human land-cover
 First, one need to download the biome raster in a folder (here, I use a temporary folder) and the accompanying XML file.
 
-```{r eval = TRUE}
+
+```r
 library(raster, quietly = T, warn.conflicts = F)
 library(snowfall, quietly = T, warn.conflicts = F)
 require(dplyr, quietly = T, warn.conflicts = F)
@@ -75,7 +76,8 @@ Once downloaded, the server can be started using the following command line (eit
 Where path is the path were you have downloaded the file, and file the name of the file (should end with a .jar extension).
 Then, the data can actually be downloaded and processed for the 66 dates available in the HYDE dataset (unfortunately, dates had to be copied manually)
 
-```{r eval = FALSE}
+
+```r
 dates <- c("10000BC", "9000BC", "8000BC", "7000BC", "6000BC", "5000BC", "4000BC", "3000BC",
            "2000BC", "1000BC", "0AD", "500AD", "1000AD", "1100AD", "1200AD", "1300AD", "1400AD", 
            "1500AD", "1600AD", "1700AD", "1710AD", "1720AD", "1730AD",   "1740AD", "1750AD", 
@@ -100,107 +102,48 @@ The code presented above takes a couple of hours to finish, but the result of th
 Here, in order to make the respresentation clearer, only the cells with less than 50% of their areas as human land-cover are considered as belonging to the biome.
 While representing the cells with less than 50% of their areas as human land-cover can be done straight away with ggplot, here, I also produced raster map that could be used in subsequent analyses (the maps are stored [here]():
 
-```{r eval = 2}
-# Creating a dataframe matching biomes names and numeric code (embedded in the biome raster)
-biomes_codes <- attr(raster_biomes@data, "attributes")[[1]] 
 
-# Creating maps of biome extent (one map per date and per biome, stored in separate directories)
-stacked_raster_path <- "path/to/stacked_raster_folder"
-biomes_extent_path <- "path/to/temporal_extent_biomes_folder"
-rasters <- dir(stacked_raster_path)
-
-
-sapply(seq(16), function(biome_value){
-    biome_name <- biomes_codes$category[biomes_codes$ID == biome_value]
-    biome_path <- file.path(biomes_extent_path, biome_name)
-    
-    if(!dir.exists(biome_path))
-        dir.create(path = biome_path)
-
-        sapply(rasters, function(r){
-            r_date <- raster(file.path(stacked_raster_path, r), band = biome_value)
-            values(r_date)[values(r_date) < 0.5] <- 0
-            d <- gsub("biomes_", "", r)
-            d <- gsub(".tif", "", d)
-            writeRaster(r_date, 
-                        file.path(biomes_extent_path, biome_name, paste0(biome_name, "_", d, ".tif")))
-    })
-})
+```r
+## # Creating a dataframe matching biomes names and numeric code (embedded in the biome raster)
+biomes_codes <- attr(raster_biomes@data, "attributes")[[1]]
+## 
+## # Creating maps of biome extent (one map per date and per biome, stored in separate directories)
+## stacked_raster_path <- "path/to/stacked_raster_folder"
+## biomes_extent_path <- "path/to/temporal_extent_biomes_folder"
+## rasters <- dir(stacked_raster_path)
+## 
+## 
+## sapply(seq(16), function(biome_value){
+##     biome_name <- biomes_codes$category[biomes_codes$ID == biome_value]
+##     biome_path <- file.path(biomes_extent_path, biome_name)
+##     
+##     if(!dir.exists(biome_path))
+##         dir.create(path = biome_path)
+## 
+##         sapply(rasters, function(r){
+##             r_date <- raster(file.path(stacked_raster_path, r), band = biome_value)
+##             values(r_date)[values(r_date) < 0.5] <- 0
+##             d <- gsub("biomes_", "", r)
+##             d <- gsub(".tif", "", d)
+##             writeRaster(r_date, 
+##                         file.path(biomes_extent_path, biome_name, paste0(biome_name, "_", d, ".tif")))
+##     })
+## })
 ```
 
 To illustrate the evolution of the temporal extent of biomes, only a few stapple date are represented but the rasters are computed for all the dates. Here, only the Temperate grassland and the Temperate forests are represented:
-```{r figs1, echo = F, fig.cap="Figure 1. Changes in the extent of temperate grasslands through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover."}
-dates <- c("10000BC", "5000BC", "3000BC", "0AD", 
-           "500AD", "1500AD", "1750AD", "1800AD",
-           "1900AD", "1950AD", "1970AD", "2016AD")
+![Figure 1. Changes in the extent of temperate grasslands through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover.](README_files/figure-html/figs1-1.png)
 
-biomes_extent_path <- "C:/Users/vincent/Documents/holocene_biomes_dynamic/Processed data/temporal_extent_biomes"
-
-r.list <- sapply(dates, function(d) raster(file.path(biomes_extent_path, 
-                                                 "Temperate Grasslands, Savannas and Shrublands", 
-                                                 paste0("Temperate Grasslands, Savannas and Shrublands_", 
-                                                        d, ".tif"))))
-r.stack <- stack(r.list)
-gplot(cut(r.stack, breaks= c(-0.1,0.49,0.6,0.7,0.8,0.9,1))) +
-    geom_tile(aes(fill = as.factor(value))) +
-    scale_discrete_manual(values = c("#D3D3D3", "#FE2200", "#FE9000", "#FFFF00", 
-                                     "#7AAB01","#006100"), aesthetics = "fill",
-                          name = "Percentage of non\n human land-cover",
-                          labels = c("<50% or NA", "50-60%", "60-70%", "70-80%", 
-                                     "80-90%", "90-100%", ""),
-                          na.value = "white")+
-    coord_equal(expand = 0)+
-    theme(panel.spacing = unit(3, units = "points"),
-          plot.background = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.border = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          axis.title = element_blank())+
-    facet_wrap(~variable, ncol = 3)
-```
-
-```{r figs2, echo = F, fig.cap="Figure 2. Changes in the extent of temperate bordlead forests through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover."}
-dates <- c("10000BC", "5000BC", "3000BC", "0AD", 
-           "500AD", "1500AD", "1750AD", "1800AD",
-           "1900AD", "1950AD", "1970AD", "2016AD")
-
-biomes_extent_path <- "C:/Users/vincent/Documents/holocene_biomes_dynamic/Processed data/temporal_extent_biomes"
-
-r.list <- sapply(dates, function(d) raster(file.path(biomes_extent_path, 
-                                                 "Temperate Broadleaf and Mixed Forests", 
-                                                 paste0("Temperate Broadleaf and Mixed Forests_", 
-                                                        d, ".tif"))))
-r.stack <- stack(r.list)
-gplot(cut(r.stack, breaks= c(-0.1,0.49,0.6,0.7,0.8,0.9,1))) +
-    geom_tile(aes(fill = as.factor(value))) +
-    scale_discrete_manual(values = c("#D3D3D3", "#FE2200", "#FE9000", "#FFFF00", 
-                                     "#7AAB01","#006100"), aesthetics = "fill",
-                          name = "Percentage of non\n human land-cover",
-                          labels = c("<50% or NA", "50-60%", "60-70%", "70-80%", 
-                                     "80-90%", "90-100%", ""),
-                          na.value = "white")+
-    coord_equal(expand = 0)+
-    theme(panel.spacing = unit(3, units = "points"),
-          plot.background = element_blank(),
-          panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.border = element_blank(),
-          axis.ticks = element_blank(),
-          axis.text = element_blank(),
-          axis.title = element_blank())+
-    facet_wrap(~variable, ncol = 3, labeller = labeller(variable = labels))
-```
+![Figure 2. Changes in the extent of temperate bordlead forests through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover.](README_files/figure-html/figs2-1.png)
 
 ### Temporal evolution of biomes area through the Holocene
 Once the stacked raster containing have been produced for each date, the total area is computed for each biome at each point in time.  
 While compiling the stacked raster in not so computationnaly intensive (a few hours), compiling the area of non human land-cover in each cell, for each biome and at each time point is computationnally intensive.  
 In order to fasten the process, it can be parallelized (here on a single machine)
 
-```{r echo = -2, eval = F}
+
+```r
 # creating a dataframe matching biomes names and numeric code (embedded in the biome raster)
-biomes_codes <- attr(raster_biomes@data, "attributes")[[1]] 
 
 # Assuming that the stacked raster are stored in "path/to/stacked_raster_folder"
 stacked_raster_path <- "path/to/stacked_raster_folder"
@@ -219,10 +162,9 @@ df_area_biomes <- sfAapply(rasters, function(r){
                     })
 ```
 
-```{r eval = T, echo = (-2:-3)}
+
+```r
 # Adding biome names as rownames
-raster_path <- "C:/Users/vincent/Documents/holocene_biomes_dynamic/Processed data"
-df_area_biomes <- read.table(file.path(raster_path, "df_area_biomes.txt"))
 rownames(df_area_biomes) <- as.character(biomes_codes$category[-1])
 
 df_area_biomes <- apply(df_area_biomes, 2, function(x){
@@ -240,36 +182,10 @@ df_area_long <- as.data.frame(t(df_area_biomes)) %>%
                     mutate(AD_or_BC = substr(year_AD_BC, nchar(year_AD_BC) - 1, nchar(year_AD_BC ))) %>%
                     mutate(year_BP = as.numeric(substr(year_AD_BC, 1, nchar(year_AD_BC) - 2))) %>%
                     mutate(year_BP = year_BP * ifelse(AD_or_BC == "BC", -1, 1) - 2017)# %>%
- 
 ```
 
 The area of each biomes at each time point is expressed as a percentage of the maximum area of each biome (that is to say at 10000BC, Figure 3)
-```{r figs3, echo = F, fig.align = "center", fig.cap = "Figure 3. Temporal evolution of biomes area. The biome area for any given point in time is calculated as the sum of cells area not covered by human land-cover, as extracted from the HYDE 3.2 dataset"}
-col.biomes<-c(rgb(46,121,121, maxColorValue=255),
-              rgb(254,250,194, maxColorValue=255),
-              rgb(135,206,250, maxColorValue=255),
-              rgb(0, 0, 255, maxColorValue = 255),
-              rgb(254,0,0, maxColorValue=255),
-              rgb(232,116,97, maxColorValue=255),
-              rgb(194,191,0, maxColorValue=255),
-              rgb(239, 239, 239, maxColorValue=255),
-              rgb(66,193,65, maxColorValue=255),
-              rgb(53,165,157, maxColorValue=255),
-              rgb(238,221,130, maxColorValue=255),
-              rgb(92,203,156, maxColorValue=255),
-              rgb(148,173,58, maxColorValue=255),
-              rgb(175,212,127, maxColorValue=255),
-              rgb(45,99,45, maxColorValue=255),
-              rgb(114,229,209, maxColorValue=255))
-
-ggplot(df_area_long, aes(x = log(-year_BP), y = Area, fill = Biome, color = Biome))+
-        geom_area(alpha = .55) +
-        geom_line(size=1)+
-        scale_x_reverse(
-                    labels = scales::math_format(10^.x))+
-        scale_fill_manual(values = col.biomes, guide = FALSE) +
-        scale_color_manual(values = col.biomes, guide = FALSE) + 
-        ylab("Percentage of the initial area")+
-        xlab("Time before present (years)")+
-        facet_wrap(~Biome, ncol=4, labeller = label_wrap_gen())
-```
+<div class="figure" style="text-align: center">
+<img src="README_files/figure-html/figs3-1.png" alt="Figure 3. Temporal evolution of biomes area. The biome area for any given point in time is calculated as the sum of cells area not covered by human land-cover, as extracted from the HYDE 3.2 dataset"  />
+<p class="caption">Figure 3. Temporal evolution of biomes area. The biome area for any given point in time is calculated as the sum of cells area not covered by human land-cover, as extracted from the HYDE 3.2 dataset</p>
+</div>
