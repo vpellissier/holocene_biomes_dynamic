@@ -1,34 +1,34 @@
 ---
-title: "Holocene biomes dynamic"
+title: "Spatial dynamic of the biomes through the Holocene"
 author: "Vincent Pellissier"
 date: "29 août 2018"
 output: 
     html_document:
         fig_caption: yes
         keep_md: true
+        number_section: true
 ---
-
-# Spatial dynamic of the biomes through the Holocene
 
 While organizing a workshop on the impact of human activities on biodiversity at different spatial
 scales, I realized that a good entry point would be to illustrate how some physical features of
 the environment (for example biome area, as defined as the area of a biome not being covered by land-use) 
 have changed through time.
-What is presented is a walkthrough on the process used to generate biome extent maps through time and the visual representation of it. The code (functions and analyses scripts) is available [here](https://github.com/vpellissier/holocene_biomes_dynamics) and the data generated are downloadable [here]()
+What is presented is a walkthrough on the process used to generate biome extent maps through time and the visual representation of it. The code (functions and analyses scripts) is [available here](https://github.com/vpellissier/holocene_biomes_dynamics) and the data generated are [downloadable here](https://drive.google.com/open?id=13hO1e9_K6_Dz0mURGzLI7ADpASQE4QdV).
+The aim of the code presented here was to illustrate the variation of the extent and total area of biomes through time that is due to human activities. I had two outputs in mind: (1) a series of chronological maps showing the variation of the extent of each biome not being affected by human through time and (2) a temporal graph of the total area of each biome not being affected by human.
+In order to do it, I use the past land-use dataset [HYDE 3.2 dataset](https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:67445/tab/1) to compile for each point in time the amount of each cell covered by a human land-cover (grazing or cropland), allowing me to compute the spatial extent of each biome - *i.e.* how many cells in a biome are mostly covered by non human land-cover - and the total area of each biome at each point in time.
+<br>
 
-## The historical land-use dataset
-The HYDE 3.2 dataset is a well-known reconstruction of past land-use (from the beginning of the Holocene to present day). For each time point the percentage of each cell being cropland (divided into irrigated and rain-fed non-rice crops and irrigated and rain-fed rice crops) or grazing land (divided into intensive pasture and less intensive rangeland) is modelled based on population estimates. The whole data set comprises 67 series of maps: for each time point, a map for each of the above land-cover was produced. In addition, at each time point, three different population estimate are used (lower, median and upper)
+# The historical land-use dataset
+The [HYDE 3.2 dataset](https://easy.dans.knaw.nl/ui/datasets/id/easy-dataset:67445/tab/1) is a well-known reconstruction of past land-use (since the beginning of the Holocene). For each time point the percentage of each cell being cropland (divided into irrigated and rain-fed non-rice crops and irrigated and rain-fed rice crops) or grazing land (divided into intensive pasture and less intensive rangeland) is modelled based on population estimates. The whole data set comprises 66 series of maps: for each time point, a map for each of the above land-cover is produced. In addition, at each time point, three different population estimates are used (lower, median and upper)
+<br>
 
-## Outputs
-I had two visual outputs in mind. (1) A series of chronological maps showing the variation of the extent of each biome through time and (2) a temporal graph of the total area for each biomes.
-
-## Methods
-### Downloading and extracting maps
+# Methods
 On the HYDE website, maps are downloadable either one by one (that is, for each point in time, one has to select the desired population scenario, format, date and type of land-cover) or in bulk (that is, on .zip file per date).
-Neither of these options is really practical. The first one implies clicking on each map, one by one. The second one implies extracting the maps from the zipfile, either one by one, or autocmatically (and having more information that is really needed).
-To overcome that issue, I designed a function (compute_non_human()) that computes for a given point in time and for each biome, the percentage of each cell NOT covered by a human land-cover (i.e. cropland and grazing land) and saves it on a local computer.  
+Neither of these options is really practical. The first one implies clicking on each map, one by one. The second one implies extracting the maps from the zipfile, either one by one, or automatically (and having more information that is really needed).
+To overcome that issue, I designed a function `compute_non_human()` that scraps maps from the website for a given point in time, computes the percentage of each cell NOT covered by a human land-cover (i.e. cropland and grazing land) for each biome and saves the resulting rasters on a local computer.  
+<br>
 
-#### Download and computation algorithm
+## Download and computation algorithm
 The code in the function is commented, but what follow is a brief description of the algorithm and the code used to run the function:
 
 * The function takes several arguments:
@@ -39,12 +39,13 @@ The code in the function is commented, but what follow is a brief description of
     
   
 * The function proceed as follow:  
-    + It calls a subfunction (dl_land_use()) which download a raster of a land-cover for a given date in a temporary folder This sub-function is called three time (to download raster for cropland, rangeland and pastures). This webscrapping approach requires one extra-step, explained in more detail below.
+    + It calls a subfunction `dl_land_use()` which download a raster of a land-cover for a given date in a temporary folder This sub-function is called three time (to download rasters for cropland, rangeland and pastures). This webscrapping approach requires one extra-step, explained in more detail below.
     + The 3 rasters are loaded in the R environment and added together, in order to create a human land-cover layer.
     + For each given biome in the raster, the percentage of each cell belonging to this biome and NOT being human land-cover is computed.
     + The output is saved as a stacked raster (one layer per biome) and the temporary folder is removed from the local computer
-    
-#### Compiling raster of non human land-cover
+<br>
+<br>
+## Compiling raster of non human land-cover
 First, one need to download the biome raster in a folder (here, I use a temporary folder) and the accompanying XML file.
 
 
@@ -96,47 +97,60 @@ for(time_point in dates){
 }
 ```
 
-The code presented above takes a couple of hours to finish, but the result of the code (the data processed and saved as stacked raster) can be found and downloaded in [this folder](https://goo.gl/aHhtGx)
+The code presented above takes a couple of hours to finish, but the result of the code (the data processed and saved as stacked raster) can be found and downloaded in [this folder](https://drive.google.com/open?id=1ZunCzQ7hWRGLjVP-B6TmOVfSTaI4zvH5)
+<br>
 
-### Mapping the biome extent through time
+# Results
+## Mapping the biome extent through time
 Here, in order to make the respresentation clearer, only the cells with less than 50% of their areas as human land-cover are considered as belonging to the biome.
-While representing the cells with less than 50% of their areas as human land-cover can be done straight away with ggplot, here, I also produced raster map that could be used in subsequent analyses (the maps are stored [here]():
+While representing the cells with less than 50% of their areas as human land-cover can be done straight away with ggplot, here, I also produced raster map that could be used in subsequent analyses (the maps are stored [here](https://drive.google.com/open?id=1NPierwev9MZiaYWKQplz45lHumJLhy3J):
 
 
 ```r
-## # Creating a dataframe matching biomes names and numeric code (embedded in the biome raster)
-biomes_codes <- attr(raster_biomes@data, "attributes")[[1]]
-## 
-## # Creating maps of biome extent (one map per date and per biome, stored in separate directories)
-## stacked_raster_path <- "path/to/stacked_raster_folder"
-## biomes_extent_path <- "path/to/temporal_extent_biomes_folder"
-## rasters <- dir(stacked_raster_path)
-## 
-## 
-## sapply(seq(16), function(biome_value){
-##     biome_name <- biomes_codes$category[biomes_codes$ID == biome_value]
-##     biome_path <- file.path(biomes_extent_path, biome_name)
-##     
-##     if(!dir.exists(biome_path))
-##         dir.create(path = biome_path)
-## 
-##         sapply(rasters, function(r){
-##             r_date <- raster(file.path(stacked_raster_path, r), band = biome_value)
-##             values(r_date)[values(r_date) < 0.5] <- 0
-##             d <- gsub("biomes_", "", r)
-##             d <- gsub(".tif", "", d)
-##             writeRaster(r_date, 
-##                         file.path(biomes_extent_path, biome_name, paste0(biome_name, "_", d, ".tif")))
-##     })
-## })
+# Creating a dataframe matching biomes names and numeric code (embedded in the biome raster)
+biomes_codes <- attr(raster_biomes@data, "attributes")[[1]] 
 ```
 
-To illustrate the evolution of the temporal extent of biomes, only a few stapple date are represented but the rasters are computed for all the dates. Here, only the Temperate grassland and the Temperate forests are represented:
-![Figure 1. Changes in the extent of temperate grasslands through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover.](README_files/figure-html/figs1-1.png)
+```r
+# Creating maps of biome extent (one map per date and per biome, stored in separate directories)
+stacked_raster_path <- "path/to/stacked_raster_folder"
+biomes_extent_path <- "path/to/temporal_extent_biomes_folder"
+rasters <- dir(stacked_raster_path)
 
-![Figure 2. Changes in the extent of temperate bordlead forests through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover.](README_files/figure-html/figs2-1.png)
 
-### Temporal evolution of biomes area through the Holocene
+sapply(seq(16), function(biome_value){
+    biome_name <- biomes_codes$category[biomes_codes$ID == biome_value]
+    biome_path <- file.path(biomes_extent_path, biome_name)
+    
+    if(!dir.exists(biome_path))
+        dir.create(path = biome_path)
+
+        sapply(rasters, function(r){
+            r_date <- raster(file.path(stacked_raster_path, r), band = biome_value)
+            values(r_date)[values(r_date) < 0.5] <- 0
+            d <- gsub("biomes_", "", r)
+            d <- gsub(".tif", "", d)
+            writeRaster(r_date, 
+                        file.path(biomes_extent_path, biome_name, paste0(biome_name, "_", d, ".tif")))
+    })
+})
+```
+
+To illustrate the evolution of the temporal extent of biomes, only a few stapple date are represented but the rasters are computed for all the dates. Here, only the Temperate grasslands and the Montane grasslands are represented:
+<div class="figure" style="text-align: center">
+<img src="README_files/figure-html/figs1-1.png" alt="Figure 1. Changes in the extent of temperate grasslands through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover."  />
+<p class="caption">Figure 1. Changes in the extent of temperate grasslands through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover.</p>
+</div>
+<br>
+<br>
+<br>
+<div class="figure" style="text-align: center">
+<img src="README_files/figure-html/figs2-1.png" alt="Figure 2. Changes in the extent of montane grasslands through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover."  />
+<p class="caption">Figure 2. Changes in the extent of montane grasslands through time. A cell is considered as belonging to a given biome only if less than 50% of its area is covered by human land-cover.</p>
+</div>
+<br>
+
+## Temporal evolution of biomes area through the Holocene
 Once the stacked raster containing have been produced for each date, the total area is computed for each biome at each point in time.  
 While compiling the stacked raster in not so computationnaly intensive (a few hours), compiling the area of non human land-cover in each cell, for each biome and at each time point is computationnally intensive.  
 In order to fasten the process, it can be parallelized (here on a single machine)
@@ -144,6 +158,7 @@ In order to fasten the process, it can be parallelized (here on a single machine
 
 ```r
 # creating a dataframe matching biomes names and numeric code (embedded in the biome raster)
+biomes_codes <- attr(raster_biomes@data, "attributes")[[1]] 
 
 # Assuming that the stacked raster are stored in "path/to/stacked_raster_folder"
 stacked_raster_path <- "path/to/stacked_raster_folder"
